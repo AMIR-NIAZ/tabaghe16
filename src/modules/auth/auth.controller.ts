@@ -4,6 +4,7 @@ import { HashPasswordPipe } from 'src/common/pipes/hash-password.pipe';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { IsPublic } from 'src/common/decorators/public.decorator';
+import { RefreshtokenDto } from './dto/refresh-token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -19,5 +20,11 @@ export class AuthController {
     @IsPublic()
     async login(@Body() dto: LoginUserDto) {
         return await this.authService.login(dto);
+    }
+
+    @Post('refresh-token')
+    @IsPublic()
+    async refreshToken(@Body() dto: RefreshtokenDto) {
+        return await this.authService.refreshToken(dto);
     }
 }

@@ -5,8 +5,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { hash, compare } from 'bcrypt';
-import { SendEmailDto } from '../dto/send-email.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
+import { RefreshtokenDto } from '../dto/refresh-token.dto';
+import { PayloadAccess, PayloadRefresh } from 'src/common/@type/payload.type';
 
 @Injectable()
 export class AuthService {
@@ -46,21 +47,47 @@ export class AuthService {
         if (!isPasswordValidation) throw new UnauthorizedException("پسوورد صحیح نمیباشد");
 
         const { accessToken, refreshToken } = await this.generateTokens(user)
+
+        const hashedToken: string = await hash(refreshToken, 10);
+        await this.userRepository.update(user.id, { refreshToken: hashedToken })
+
         return { message: "لاگین با موفقیت انجام شد", data: { accessToken, refreshToken } };
     }
 
+    async refreshToken(dto: RefreshtokenDto) {
+        const { refresh_token } = dto;
+        try {
+            const payLoad = this.jwtService.verify<PayloadRefresh>(refresh_token);
+
+            const user = await this.userRepository.findOneBy({ id: payLoad.sub })
+            if (!user) throw new UnauthorizedException("توکن معتبر نمیباشد");
+
+            const isToken = await compare(refresh_token, user.refreshToken)
+            if (!isToken) throw new UnauthorizedException("توکن معتبر نمیباشد");
+
+            const {accessToken} =  await this.generateTokens(user) 
+            
+            return {message: "توکن با موفقیت تغیر یافت", data: {accessToken}}
+        } catch (err) {
+            throw new UnauthorizedException("توکن معتبر نمیباشد");
+        }
+    }
+
     async generateTokens(user: User) {
-        const payload = {
+        const payloadAccess: PayloadAccess = {
             sub: user.id,
-            email: user.email,
             role: user.role,
         };
 
-        const accessToken = this.jwtService.sign(payload, {
+        const payloadRefresh: PayloadRefresh = {
+            sub: user.id,
+        };
+
+        const accessToken = this.jwtService.sign(payloadAccess, {
             expiresIn: "10m",
         })
-        const refreshToken = this.jwtService.sign(payload, {
-            expiresIn: "7d",
+        const refreshToken = this.jwtService.sign(payloadRefresh, {
+            expiresIn: "25d",
         });
 
         return { accessToken, refreshToken };
