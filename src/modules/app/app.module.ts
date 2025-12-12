@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { PayloadGuard } from '../../common/guard/payload.guard';
 import { RoleGurd } from '../../common/guard/role.guard';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
     imports: [
@@ -23,6 +24,7 @@ import { RoleGurd } from '../../common/guard/role.guard';
         ConfigModule.forRoot({
             isGlobal: true,
         }),
+        CacheModule.register({isGlobal: true}),
         AuthModule,
     ],
     providers: [

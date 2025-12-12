@@ -4,13 +4,13 @@ import { Column, Entity } from 'typeorm';
 
 @Entity()
 export class User extends BaseEntity {
-    @Column()
+    @Column({ nullable: true })
     name: string;
 
     @Column({ unique: true })
     email: string;
 
-    @Column()
+    @Column({ nullable: true })
     password: string;
 
     @Column({ default: roleEnum.USER })
@@ -18,4 +18,7 @@ export class User extends BaseEntity {
 
     @Column({ nullable: true })
     refreshToken?: string;
+
+    @Column({ default: false })
+    is_active: boolean;
 }
